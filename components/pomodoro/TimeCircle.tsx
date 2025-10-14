@@ -1,21 +1,42 @@
 import { formatTime } from "@/utils/time";
 
-export function TimeCircle({ seconds, total }: { seconds: number; total: number; }) {
-  const progress = total ? 1 - seconds / total : 0;
+type TimeCircleProps = {
+  seconds: number;
+  total: number;
+};
+
+export function TimeCircle({ seconds, total }: TimeCircleProps) {
+  const progress = total > 0 ? 1 - seconds / total : 0;
+  const clampedProgress = Math.min(1, Math.max(0, progress));
+  const progressAngle = clampedProgress * 360;
+
   return (
-    <div className="flex flex-col items-center mb-6">
-      <div className="relative grid place-items-center rounded-full" style={{ width: 220, height: 220 }}>
-        <div aria-hidden className="absolute inset-0 rounded-full"
+    <div className="flex flex-col items-center gap-6">
+      <div
+        className="relative grid place-items-center rounded-full"
+        style={{ width: 240, height: 240 }}
+        aria-label="Tempo restante"
+      >
+        <div
+          aria-hidden
+          className="absolute inset-0 rounded-full"
           style={{
-            background: `conic-gradient(#6C3BF4 ${progress * 360}deg, #232323 ${progress * 360}deg)`,
-            filter: "drop-shadow(0 0 16px rgba(108,59,244,0.35))",
-          }} />
-        <div className="absolute inset-[10px] rounded-full" style={{ background: "#0E0E0E" }} />
-        <div className="relative text-5xl font-bold tabular-nums">{formatTime(seconds)}</div>
+            background: `conic-gradient(#1db954 0deg ${progressAngle}deg, #6c3bf4 ${progressAngle}deg 360deg)`,
+            filter: "drop-shadow(0 0 24px rgba(108,59,244,0.45))",
+            transition: "background 0.3s ease",
+          }}
+        />
+        <div
+          className="absolute inset-[12px] rounded-full border border-[#1f1f1f]"
+          style={{ background: "#0c0c0c" }}
+        />
+        <div className="relative text-5xl font-bold tabular-nums" role="timer" aria-live="polite">
+          {formatTime(seconds)}
+        </div>
       </div>
-      <div className="mt-6 text-xs text-zinc-400">
-        Espa�o = Start/Pause  R = Restart
-      </div>
+      <p className="text-xs text-zinc-400">
+        Espaço = Start/Pause · R = Restart
+      </p>
     </div>
   );
 }
