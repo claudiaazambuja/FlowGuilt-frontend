@@ -1,5 +1,9 @@
 export type SoundId = "bright-beep" | "soft-chime" | "digital-click";
 
+export const DEFAULT_SOUND_ID: SoundId = "soft-chime";
+
+export const DEFAULT_MIN_SOUND_DURATION_SECONDS = 30;
+
 export type SoundOption = {
   id: SoundId;
   label: string;
@@ -111,13 +115,17 @@ export const SOUND_OPTIONS: SoundOption[] = [
   },
 ];
 
-function scheduleSegment(context: AudioContext, segment: ToneSegment) {
+function scheduleSegment(
+  context: AudioContext,
+  segment: ToneSegment,
+  baseStartTime: number,
+) {
   const attack = segment.attack ?? 0.01;
   const decay = segment.decay ?? 0.1;
   const sustain = segment.sustain ?? 0.5;
   const release = segment.release ?? 0.2;
   const gainLevel = segment.gain ?? 0.3;
-  const startTime = context.currentTime + (segment.startOffset ?? 0);
+  const startTime = baseStartTime + (segment.startOffset ?? 0);
   const endTime = startTime + segment.duration;
   const releaseStart = Math.max(startTime + attack + decay, endTime - release);
   const sustainLevel = gainLevel * sustain;
@@ -127,11 +135,11 @@ function scheduleSegment(context: AudioContext, segment: ToneSegment) {
   oscillator.frequency.setValueAtTime(segment.frequency, startTime);
 
   const gainNode = context.createGain();
-  gainNode.gain.setValueAtTime(0, context.currentTime);
+  gainNode.gain.setValueAtTime(0, baseStartTime);
   oscillator.connect(gainNode);
   gainNode.connect(context.destination);
 
-  gainNode.gain.cancelScheduledValues(startTime);
+  gainNode.gain.cancelScheduledValues(baseStartTime);
   gainNode.gain.setValueAtTime(0.0001, startTime);
   gainNode.gain.exponentialRampToValueAtTime(Math.max(gainLevel, 0.0001), startTime + attack);
   gainNode.gain.exponentialRampToValueAtTime(
@@ -149,13 +157,46 @@ function scheduleSegment(context: AudioContext, segment: ToneSegment) {
   };
 }
 
-export function playSoundOption(context: AudioContext, soundId: SoundId) {
+type PlaySoundOptions = {
+  /**
+   * Tempo mínimo em segundos que o som deve durar.
+   * Por padrão são utilizados 30 segundos para garantir que o alarme seja percebido.
+   */
+  minDurationSeconds?: number;
+};
+
+function getPatternLength(segments: ToneSegment[]): number {
+  return segments.reduce((maxLength, segment) => {
+    const startOffset = segment.startOffset ?? 0;
+    return Math.max(maxLength, startOffset + segment.duration);
+  }, 0);
+}
+
+export function playSoundOption(
+  context: AudioContext,
+  soundId: SoundId,
+  options?: PlaySoundOptions,
+) {
   const segments = SOUND_SEGMENTS[soundId];
-  if (!segments) {
+  if (!segments || segments.length === 0) {
     return;
   }
 
-  segments.forEach((segment) => {
-    scheduleSegment(context, segment);
-  });
+  const minDuration = Math.max(
+    0,
+    options?.minDurationSeconds ?? DEFAULT_MIN_SOUND_DURATION_SECONDS,
+  );
+
+  const patternLength = getPatternLength(segments);
+  const iterations = patternLength > 0 ? Math.max(1, Math.ceil(minDuration / patternLength)) : 1;
+
+  const baseStartTime = context.currentTime;
+
+  for (let iteration = 0; iteration < iterations; iteration += 1) {
+    const iterationOffset = iteration * (patternLength || minDuration);
+
+    segments.forEach((segment) => {
+      scheduleSegment(context, segment, baseStartTime + iterationOffset);
+    });
+  }
 }
