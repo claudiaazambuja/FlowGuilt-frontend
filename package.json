@@ -16,7 +16,7 @@
   },
  "scripts": {
     "dev": "next dev",
-    "build": "next build && next export -o docs",
+    "build": "next build && rm -rf docs && mv out docs",
     "predeploy": "rm -rf docs && npm run build && touch docs/.nojekyll && cp docs/index.html docs/404.html || true",
     "deploy": "npm run predeploy && git add -f docs && git commit -m \"deploy: export static to docs/\" && git push"
   }
