@@ -21,7 +21,7 @@ const DEFAULT_THEME: WeatherTheme = {
   id: "default",
   backgroundColor: "#0f172a",
   overlayColor: "rgba(15, 23, 42, 0.55)",
-  image: "backgrounds/clear-night.svg",
+  image: "/backgrounds/clear-night.svg",
   textColor: "#f8fafc",
   description: "Aguardando dados meteorológicos",
 };
@@ -31,7 +31,7 @@ const THEME_MAP: Record<string, WeatherTheme> = {
     id: "clear-day",
     backgroundColor: "#38bdf8",
     overlayColor: "rgba(14, 116, 144, 0.45)",
-    image: "backgrounds/clear-day.svg",
+    image: "/backgrounds/clear-day.svg",
     textColor: "#082f49",
     description: "Céu limpo",
   },
@@ -39,7 +39,7 @@ const THEME_MAP: Record<string, WeatherTheme> = {
     id: "clear-night",
     backgroundColor: "#111827",
     overlayColor: "rgba(15, 23, 42, 0.65)",
-    image: "backgrounds/clear-night.svg",
+    image: "/backgrounds/clear-night.svg",
     textColor: "#e2e8f0",
     description: "Noite limpa",
   },
@@ -47,7 +47,7 @@ const THEME_MAP: Record<string, WeatherTheme> = {
     id: "cloudy",
     backgroundColor: "#cbd5f5",
     overlayColor: "rgba(30, 64, 175, 0.35)",
-    image: "backgrounds/cloudy.svg",
+    image: "/backgrounds/cloudy.svg",
     textColor: "#0f172a",
     description: "Nublado",
   },
@@ -55,7 +55,7 @@ const THEME_MAP: Record<string, WeatherTheme> = {
     id: "fog",
     backgroundColor: "#cbd5f5",
     overlayColor: "rgba(71, 85, 105, 0.35)",
-    image: "backgrounds/fog.svg",
+    image: "/backgrounds/fog.svg",
     textColor: "#0f172a",
     description: "Neblina",
   },
@@ -63,7 +63,7 @@ const THEME_MAP: Record<string, WeatherTheme> = {
     id: "rainy",
     backgroundColor: "#1e293b",
     overlayColor: "rgba(30, 64, 175, 0.55)",
-    image: "backgrounds/rainy.svg",
+    image: "/backgrounds/rainy.svg",
     textColor: "#e2e8f0",
     description: "Chuva",
   },
@@ -71,7 +71,7 @@ const THEME_MAP: Record<string, WeatherTheme> = {
     id: "snowy",
     backgroundColor: "#f8fafc",
     overlayColor: "rgba(59, 130, 246, 0.35)",
-    image: "backgrounds/snowy.svg",
+    image: "/backgrounds/snowy.svg",
     textColor: "#0f172a",
     description: "Neve",
   },
@@ -79,7 +79,7 @@ const THEME_MAP: Record<string, WeatherTheme> = {
     id: "storm",
     backgroundColor: "#020617",
     overlayColor: "rgba(147, 197, 253, 0.25)",
-    image: "backgrounds/storm.svg",
+    image: "/backgrounds/storm.svg",
     textColor: "#e0f2fe",
     description: "Tempestade",
   },
@@ -274,24 +274,29 @@ export function WeatherAdaptiveBackground({ children }: Props) {
     return {
       backgroundColor: theme.backgroundColor,
       backgroundImage: `url(${theme.image})`,
-      backgroundSize: "cover",
       backgroundPosition: "center",
+      backgroundSize: "cover",
+      color: theme.textColor,
     } as const;
-  }, [theme.backgroundColor, theme.image]);
+  }, [theme.backgroundColor, theme.image, theme.textColor]);
 
   return (
-    <div
-      className="min-h-screen w-full transition-colors duration-700 ease-out"
-      style={containerStyle}
-    >
-      <div className="relative min-h-screen w-full">
-        <div className="absolute inset-0" style={overlayStyle} />
-        <div className="relative z-10 flex min-h-screen flex-col">
-          <div className="flex items-start justify-end px-6 pt-6">
-            <div
-              className="rounded-lg bg-black/20 px-4 py-3 text-right text-sm backdrop-blur"
-              style={{ color: theme.textColor }}
-            >
+      <div
+        className="min-h-screen w-full bg-slate-950 text-slate-100 transition-colors duration-700 ease-out"
+        style={containerStyle}
+      >
+        <div className="relative min-h-screen w-full">
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={overlayStyle}
+            aria-hidden
+          />
+          <div className="relative z-10 flex min-h-screen flex-col">
+            <div className="flex items-start justify-end px-6 pt-6">
+              <div
+                className="max-w-xs rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-right text-sm backdrop-blur-xl"
+                style={{ color: theme.textColor }}
+              >
               {weatherState ? (
                 <>
                   <p className="font-semibold">{weatherState.cityLabel}</p>
@@ -312,9 +317,9 @@ export function WeatherAdaptiveBackground({ children }: Props) {
             </div>
           </div>
 
-          <main className="flex flex-1 items-center justify-center p-6">
-            {children}
-          </main>
+            <main className="flex flex-1 items-center justify-center p-6">
+              {children}
+            </main>
         </div>
       </div>
     </div>

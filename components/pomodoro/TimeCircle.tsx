@@ -21,15 +21,12 @@ export function TimeCircle({ seconds, total }: TimeCircleProps) {
           aria-hidden
           className="absolute inset-0 rounded-full"
           style={{
-            background: `conic-gradient(#1db954 0deg ${progressAngle}deg, #6c3bf4 ${progressAngle}deg 360deg)`,
+            background: `conic-gradient(#1DB954 0deg ${progressAngle}deg, #6C3BF4 ${progressAngle}deg 360deg)`,
             filter: "drop-shadow(0 0 24px rgba(108,59,244,0.45))",
             transition: "background 0.3s ease",
           }}
         />
-        <div
-          className="absolute inset-[12px] rounded-full border border-[#1f1f1f]"
-          style={{ background: "#0c0c0c" }}
-        />
+        <div className="absolute inset-[12px] rounded-full border border-white/10 bg-black/70" aria-hidden />
         <div
           className="relative text-4xl font-bold tabular-nums sm:text-5xl"
           role="timer"

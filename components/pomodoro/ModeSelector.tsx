@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/Button";
+import { cn } from "@/lib";
 
 export type Mode = "pomodoro" | "short" | "long" | "custom";
 
@@ -19,18 +20,20 @@ export function ModeSelector({ mode, onSelect }: ModeSelectorProps) {
     <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:flex md:flex-wrap">
       {OPTIONS.map((option) => {
         const isActive = option.mode === mode;
-        const stateClasses = isActive
-          ? "bg-[#1db954] text-black hover:brightness-110"
-          : "bg-[#1a1a1a] text-zinc-200 hover:brightness-110";
 
         return (
           <Button
             key={option.mode}
             type="button"
-            variant={isActive ? "primary" : "secondary"}
+            variant="secondary"
             onClick={() => onSelect(option.mode)}
             aria-pressed={isActive}
-            className={`w-full md:flex-1 ${stateClasses}`}
+            data-active={isActive}
+            className={cn(
+              "w-full md:flex-1 border border-white/5 bg-[#151515] text-zinc-200 transition-all duration-200 hover:brightness-110",
+              "data-[active=true]:border-[#1DB954]/40 data-[active=true]:bg-[#1DB954] data-[active=true]:text-black",
+              isActive ? "shadow-[0_0_25px_rgba(29,185,84,0.25)]" : undefined,
+            )}
           >
             {option.label}
           </Button>

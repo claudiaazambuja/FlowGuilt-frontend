@@ -144,13 +144,13 @@ export default function PomodoroPanel() {
   );
 
   return (
-    <Card className="w-full max-w-2xl border border-[#1f1f1f] bg-[#131313] text-[#f2f2f2] shadow-[0_0_40px_rgba(108,59,244,0.25)]">
+    <Card className="w-full max-w-2xl text-[#f4f4f5]">
       <CardContent className="flex flex-col gap-6 sm:gap-8">
-        <header className="flex flex-col items-center gap-2 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
+        <header className="flex flex-col gap-2 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
             FlowGuilt Pomodoro
           </h1>
-          <span className="text-xs text-zinc-400 sm:text-sm">
+          <span className="text-xs uppercase tracking-[0.18em] text-zinc-400 sm:text-sm">
             Frontend only MVP
           </span>
         </header>
@@ -158,11 +158,8 @@ export default function PomodoroPanel() {
         <ModeSelector mode={mode} onSelect={setMode} />
 
         {mode === "custom" && (
-          <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-end">
-            <label
-              htmlFor="customMinutes"
-              className="text-sm font-medium text-zinc-300"
-            >
+          <div className="flex flex-col gap-2 rounded-xl border border-white/5 bg-[#161616]/80 p-4 sm:flex-row sm:flex-wrap sm:items-end sm:gap-4">
+            <label htmlFor="customMinutes" className="text-sm font-medium text-zinc-300">
               Minutos personalizados
             </label>
             <input
@@ -175,7 +172,7 @@ export default function PomodoroPanel() {
               value={customMinutesInput}
               onChange={(event) => handleCustomMinutesChange(event.target.value)}
               onBlur={handleCustomMinutesBlur}
-              className="w-full rounded-md border border-[#2a2a2a] bg-[#0e0e0e] px-3 py-2 text-right text-lg font-semibold text-[#f2f2f2] outline-none transition focus:border-[#6c3bf4] focus:ring-2 focus:ring-[#6c3bf4]/40 sm:w-28"
+              className="w-full rounded-lg border border-white/10 bg-black/60 px-3 py-2 text-right text-lg font-semibold text-[#f4f4f5] shadow-inner transition focus:border-[#6C3BF4] focus:outline-none focus:ring-2 focus:ring-[#6C3BF4]/30 sm:w-28"
             />
             <span className="text-xs text-zinc-500">
               {MIN_CUSTOM_MINUTES}-{MAX_CUSTOM_MINUTES} minutos
@@ -189,7 +186,9 @@ export default function PomodoroPanel() {
           onPreview={handlePreviewSound}
         />
         {soundError && (
-          <p className="text-xs text-amber-400">{soundError}</p>
+          <p className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+            {soundError}
+          </p>
         )}
 
         <TimeCircle seconds={secondsLeft} total={totalSeconds} />
