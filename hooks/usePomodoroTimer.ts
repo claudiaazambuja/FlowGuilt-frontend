@@ -1,9 +1,21 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-export function usePomodoroTimer(initialSeconds: number) {
+type UsePomodoroTimerOptions = {
+  onComplete?: () => void;
+};
+
+export function usePomodoroTimer(
+  initialSeconds: number,
+  { onComplete }: UsePomodoroTimerOptions = {},
+) {
   const [secondsLeft, setSecondsLeft] = useState(initialSeconds);
   const [isRunning, setIsRunning] = useState(false);
   const lastTickRef = useRef<number | null>(null);
+  const onCompleteRef = useRef(onComplete);
+
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
 
   useEffect(() => {
     setSecondsLeft(initialSeconds);
@@ -47,6 +59,9 @@ export function usePomodoroTimer(initialSeconds: number) {
   useEffect(() => {
     if (secondsLeft === 0 && isRunning) {
       setIsRunning(false);
+      if (onCompleteRef.current) {
+        onCompleteRef.current();
+      }
     }
   }, [isRunning, secondsLeft]);
 

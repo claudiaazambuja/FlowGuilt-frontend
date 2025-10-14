@@ -1,32 +1,38 @@
 type ClassDictionary = Record<string, boolean | null | undefined>;
-type ClassValue =
+type ClassArray = ClassValue[];
+
+export type ClassValue =
   | string
   | number
-  | ClassDictionary
-  | ClassValue[]
-  | boolean
   | null
-  | undefined;
+  | undefined
+  | ClassDictionary
+  | ClassArray;
 
-function toClassName(value: ClassValue): string {
+function appendClass(value: ClassValue, classList: string[]) {
+  if (!value) {
+    return;
+  }
+
   if (typeof value === "string" || typeof value === "number") {
-    return String(value);
+    classList.push(String(value));
+    return;
   }
 
   if (Array.isArray(value)) {
-    return value.map(toClassName).filter(Boolean).join(" ");
+    value.forEach((entry) => appendClass(entry, classList));
+    return;
   }
 
-  if (value && typeof value === "object") {
-    return Object.entries(value)
-      .filter(([, condition]) => Boolean(condition))
-      .map(([className]) => className)
-      .join(" ");
-  }
-
-  return "";
+  Object.entries(value).forEach(([key, condition]) => {
+    if (condition) {
+      classList.push(key);
+    }
+  });
 }
 
 export function cn(...inputs: ClassValue[]) {
-  return inputs.map(toClassName).filter(Boolean).join(" ");
+  const classList: string[] = [];
+  inputs.forEach((value) => appendClass(value, classList));
+  return classList.join(" ");
 }
