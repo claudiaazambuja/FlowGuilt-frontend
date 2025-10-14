@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/Button";
+import { cn } from "@/lib";
 import { SOUND_OPTIONS, type SoundId } from "@/lib/soundLibrary";
 
 type SoundSelectorProps = {
@@ -26,11 +27,13 @@ export function SoundSelector({
           return (
             <label
               key={option.id}
-              className={`group relative flex cursor-pointer items-start gap-3 rounded-md border px-3 py-2 transition ${
+              className={cn(
+                "group relative flex cursor-pointer items-start gap-3 rounded-xl border px-3 py-2 transition",
+                "border-white/5 bg-[#141414]/80 hover:border-[#6C3BF4]/40",
                 isSelected
-                  ? "border-[#6c3bf4] bg-[#1a132d]"
-                  : "border-[#232323] bg-[#0f0f0f] hover:border-[#6c3bf4]/40"
-              }`}
+                  ? "border-[#6C3BF4] bg-[#1a132d] shadow-[0_0_25px_rgba(108,59,244,0.3)]"
+                  : undefined,
+              )}
             >
               <input
                 type="radio"
@@ -49,7 +52,7 @@ export function SoundSelector({
               <Button
                 type="button"
                 variant="secondary"
-                className="px-3 py-1 text-xs font-medium text-zinc-200"
+                className="px-3 py-1 text-xs font-medium text-zinc-200 border border-white/10 bg-[#1E1E1E]/80"
                 onClick={(event) => {
                   event.preventDefault();
                   onPreview(option.id);
