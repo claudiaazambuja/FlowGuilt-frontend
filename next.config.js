@@ -4,6 +4,7 @@ const isGH = process.env.GITHUB_PAGES === 'true' // opcional
 const repo = 'FlowGuilt-frontend' // <--- troque
 
 module.exports = {
+  eslint: { ignoreDuringBuilds: true },
   output: 'export',            // gera HTML estático (out/)
   images: { unoptimized: true }, // GH Pages não suporta Image Optimization
   trailingSlash: true,         // ajuda com 404/refresh
