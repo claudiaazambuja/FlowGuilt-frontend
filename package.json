@@ -16,10 +16,10 @@
     "react-dom": "^18.3.1",
     "tailwind-merge": "^3.3.1"
   },
-  "scripts": {
+ "scripts": {
     "dev": "next dev",
-    "build": "next build && next export",
-    "predeploy": "rm -rf out && npm run build && touch out/.nojekyll",
-    "deploy": "git subtree push --prefix out origin gh-pages"
+    "build": "next build && next export -o docs",
+    "predeploy": "rm -rf docs && npm run build && touch docs/.nojekyll && cp docs/index.html docs/404.html || true",
+    "deploy": "npm run predeploy && git add -f docs && git commit -m \"deploy: export static to docs/\" && git push"
   }
 }
