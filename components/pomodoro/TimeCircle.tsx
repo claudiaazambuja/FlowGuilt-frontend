@@ -14,7 +14,7 @@ export function TimeCircle({ seconds, total }: TimeCircleProps) {
     <div className="flex flex-col items-center gap-6">
       <div
         className="relative grid place-items-center rounded-full"
-        style={{ width: 240, height: 240 }}
+        style={{ width: "clamp(200px, 70vw, 320px)", height: "clamp(200px, 70vw, 320px)" }}
         aria-label="Tempo restante"
       >
         <div
@@ -30,7 +30,11 @@ export function TimeCircle({ seconds, total }: TimeCircleProps) {
           className="absolute inset-[12px] rounded-full border border-[#1f1f1f]"
           style={{ background: "#0c0c0c" }}
         />
-        <div className="relative text-5xl font-bold tabular-nums" role="timer" aria-live="polite">
+        <div
+          className="relative text-4xl font-bold tabular-nums sm:text-5xl"
+          role="timer"
+          aria-live="polite"
+        >
           {formatTime(seconds)}
         </div>
       </div>
