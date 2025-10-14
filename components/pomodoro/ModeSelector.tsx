@@ -16,9 +16,13 @@ type ModeSelectorProps = {
 
 export function ModeSelector({ mode, onSelect }: ModeSelectorProps) {
   return (
-    <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:flex md:flex-wrap">
       {OPTIONS.map((option) => {
         const isActive = option.mode === mode;
+        const stateClasses = isActive
+          ? "bg-[#1db954] text-black hover:brightness-110"
+          : "bg-[#1a1a1a] text-zinc-200 hover:brightness-110";
+
         return (
           <Button
             key={option.mode}
@@ -26,11 +30,7 @@ export function ModeSelector({ mode, onSelect }: ModeSelectorProps) {
             variant={isActive ? "primary" : "secondary"}
             onClick={() => onSelect(option.mode)}
             aria-pressed={isActive}
-            className={
-              isActive
-                ? "bg-[#1db954] text-black hover:brightness-110"
-                : "bg-[#1a1a1a] text-zinc-200 hover:brightness-110"
-            }
+            className={`w-full md:flex-1 ${stateClasses}`}
           >
             {option.label}
           </Button>
