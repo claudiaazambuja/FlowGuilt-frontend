@@ -6,7 +6,12 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { usePomodoroTimer } from "@/hooks/usePomodoroTimer";
 import { useTimerKeyboardShortcuts } from "@/hooks/useTimerKeyboardShortcuts";
 
-import { playSoundOption, type SoundId } from "@/lib/soundLibrary";
+import {
+  DEFAULT_MIN_SOUND_DURATION_SECONDS,
+  DEFAULT_SOUND_ID,
+  playSoundOption,
+  type SoundId,
+} from "@/lib/soundLibrary";
 
 import { Controls } from "./Controls";
 import { ModeSelector, type Mode } from "./ModeSelector";
@@ -29,7 +34,7 @@ export default function PomodoroPanel() {
     String(DEFAULT_CUSTOM_MINUTES),
   );
   const [selectedSoundId, setSelectedSoundId] = useState<SoundId>(
-    "bright-beep",
+    DEFAULT_SOUND_ID,
   );
   const [soundError, setSoundError] = useState<string | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -109,7 +114,9 @@ export default function PomodoroPanel() {
     void (async () => {
       const context = await ensureAudioContext();
       if (context) {
-        playSoundOption(context, selectedSoundId);
+        playSoundOption(context, selectedSoundId, {
+          minDurationSeconds: DEFAULT_MIN_SOUND_DURATION_SECONDS,
+        });
       }
     })();
   }, [ensureAudioContext, selectedSoundId]);
@@ -136,7 +143,9 @@ export default function PomodoroPanel() {
       void (async () => {
         const context = await ensureAudioContext();
         if (context) {
-          playSoundOption(context, soundId);
+          playSoundOption(context, soundId, {
+            minDurationSeconds: DEFAULT_MIN_SOUND_DURATION_SECONDS,
+          });
         }
       })();
     },
