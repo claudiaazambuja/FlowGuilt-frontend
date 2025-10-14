@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { Card, CardContent } from "@/components/ui/Card";
 import { usePomodoroTimer } from "@/hooks/usePomodoroTimer";
+import { useTimerKeyboardShortcuts } from "@/hooks/useTimerKeyboardShortcuts";
 
 import { Controls } from "./Controls";
 import { ModeSelector, type Mode } from "./ModeSelector";
@@ -47,36 +48,7 @@ export default function PomodoroPanel() {
     totalSeconds,
   );
 
-  const handleKeyboard = useCallback(
-    (event: KeyboardEvent) => {
-      const target = event.target as HTMLElement | null;
-      if (target?.isContentEditable) {
-        return;
-      }
-      const tagName = target?.tagName ?? "";
-      if (tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT") {
-        return;
-      }
-
-      if (event.code === "Space") {
-        event.preventDefault();
-        startPause();
-      }
-
-      if (event.key.toLowerCase() === "r") {
-        event.preventDefault();
-        restart();
-      }
-    },
-    [restart, startPause],
-  );
-
-  useEffect(() => {
-    window.addEventListener("keydown", handleKeyboard);
-    return () => {
-      window.removeEventListener("keydown", handleKeyboard);
-    };
-  }, [handleKeyboard]);
+  useTimerKeyboardShortcuts({ onRestart: restart, onStartPause: startPause });
 
   const handleCustomMinutesChange = (value: string) => {
     if (/^\d*$/.test(value)) {
