@@ -1,1 +1,27 @@
-node_modules
+# Node / package managers
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# Next.js
+.next/
+out/            # export estático (geralmente não versionar)
+.vercel/
+.turbo/
+
+# TypeScript / builds
+dist/
+*.tsbuildinfo
+
+# Env / segredos
+.env
+.env*.local
+
+# IDE/OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
