@@ -1,17 +1,36 @@
 import { Button } from "@/components/ui/Button";
 
-export function Controls({ running, onStartPause, onRestart }:{
-  running: boolean; onStartPause: () => void; onRestart: () => void;
-}) {
+type ControlsProps = {
+  running: boolean;
+  onStartPause: () => void;
+  onRestart: () => void;
+};
+
+export function Controls({ running, onStartPause, onRestart }: ControlsProps) {
+  const startPauseLabel = running ? "Pause" : "Start";
+  const startPauseClasses = running
+    ? "bg-[#6c3bf4] text-white hover:brightness-110 focus:ring-[#6c3bf4]"
+    : "bg-[#1db954] text-black hover:brightness-110 focus:ring-[#1db954]";
+
   return (
     <div className="flex items-center justify-center gap-3">
-      <Button onClick={onStartPause}
-        className={running ? "bg-[#6C3BF4] hover:brightness-110 text-white"
-                           : "bg-[#1DB954] hover:brightness-110 text-black"}>
-        {running ? "Pause" : "Start"}
+      <Button
+        type="button"
+        onClick={onStartPause}
+        className={startPauseClasses}
+        aria-label={`${startPauseLabel} timer`}
+        title="Espaço: Start/Pause"
+      >
+        {startPauseLabel}
       </Button>
-      <Button variant="secondary" onClick={onRestart}
-        className="bg-[#232323] hover:brightness-110 text-zinc-200 border-0">
+      <Button
+        type="button"
+        variant="secondary"
+        onClick={onRestart}
+        className="bg-[#1a1a1a] text-zinc-200 hover:brightness-110 focus:ring-[#6c3bf4]"
+        aria-label="Restart timer"
+        title="R: Restart"
+      >
         Restart
       </Button>
     </div>

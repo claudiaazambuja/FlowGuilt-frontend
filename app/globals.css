@@ -2,5 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
-:root { --fg-bg:#0E0E0E; --fg-text:#F2F2F2; }
-html, body { background: var(--fg-bg); color: var(--fg-text); }
+:root {
+  --fg-bg: #0e0e0e;
+  --fg-text: #f2f2f2;
+}
+
+html,
+body {
+  min-height: 100%;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(29, 185, 84, 0.18), transparent 55%),
+    radial-gradient(circle at 85% 80%, rgba(108, 59, 244, 0.24), transparent 60%),
+    var(--fg-bg);
+  color: var(--fg-text);
+}
+
+body {
+  font-family: var(--font-geist-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}

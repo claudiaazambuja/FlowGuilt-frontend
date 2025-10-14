@@ -3,30 +3,69 @@ import { useCallback, useEffect, useRef, useState } from "react";
 export function usePomodoroTimer(initialSeconds: number) {
   const [secondsLeft, setSecondsLeft] = useState(initialSeconds);
   const [isRunning, setIsRunning] = useState(false);
-  const lastTick = useRef<number | null>(null);
-
-  useEffect(() => { setSecondsLeft(initialSeconds); setIsRunning(false); }, [initialSeconds]);
+  const lastTickRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (!isRunning) { lastTick.current = null; return; }
-    let raf: number;
-    const loop = (ts: number) => {
-      if (lastTick.current == null) lastTick.current = ts;
-      const delta = ts - lastTick.current;
-      if (delta >= 1000) {
-        setSecondsLeft((p) => Math.max(0, p - Math.floor(delta / 1000)));
-        lastTick.current = ts;
+    setSecondsLeft(initialSeconds);
+    setIsRunning(false);
+    lastTickRef.current = null;
+  }, [initialSeconds]);
+
+  useEffect(() => {
+    if (!isRunning) {
+      lastTickRef.current = null;
+      return;
+    }
+
+    let animationFrameId: number;
+
+    const tick = (timestamp: number) => {
+      if (lastTickRef.current == null) {
+        lastTickRef.current = timestamp;
+      } else {
+        const delta = timestamp - lastTickRef.current;
+        if (delta >= 1000) {
+          const elapsedSeconds = Math.floor(delta / 1000);
+          if (elapsedSeconds > 0) {
+            setSecondsLeft((previous) => Math.max(0, previous - elapsedSeconds));
+            const remainder = delta % 1000;
+            lastTickRef.current = timestamp - remainder;
+          }
+        }
       }
-      raf = requestAnimationFrame(loop);
+
+      animationFrameId = window.requestAnimationFrame(tick);
     };
-    raf = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(raf);
+
+    animationFrameId = window.requestAnimationFrame(tick);
+
+    return () => {
+      window.cancelAnimationFrame(animationFrameId);
+    };
   }, [isRunning]);
 
-  useEffect(() => { if (secondsLeft === 0 && isRunning) setIsRunning(false); }, [secondsLeft, isRunning]);
+  useEffect(() => {
+    if (secondsLeft === 0 && isRunning) {
+      setIsRunning(false);
+    }
+  }, [isRunning, secondsLeft]);
 
-  const startPause = useCallback(() => setIsRunning((v) => !v), []);
-  const restart = useCallback(() => { setSecondsLeft(initialSeconds); setIsRunning(false); }, [initialSeconds]);
+  const startPause = useCallback(() => {
+    setIsRunning((previous) => {
+      if (!previous && secondsLeft === 0) {
+        setSecondsLeft(initialSeconds);
+        lastTickRef.current = null;
+        return true;
+      }
+      return !previous;
+    });
+  }, [initialSeconds, secondsLeft]);
+
+  const restart = useCallback(() => {
+    setSecondsLeft(initialSeconds);
+    setIsRunning(false);
+    lastTickRef.current = null;
+  }, [initialSeconds]);
 
   return { secondsLeft, isRunning, startPause, restart } as const;
 }
