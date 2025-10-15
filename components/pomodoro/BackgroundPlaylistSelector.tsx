@@ -1,114 +1,19 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
+
 import { Button } from "@/components/ui/Button";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { cn } from "@/lib";
 
-const DEFAULT_PLAYLISTS = [
-  {
-    id: "serotonin",
-    name: "Serotonin",
-    description: "Para focar com gás total.",
-    spotifyId: "4dx7CqzVnWkTvTox9poIYF",
-  },
-  {
-    id: "brazilian-lofi",
-    name: "Brazilian Lofi",
-    description: "Lofi nacional com groove leve e constante.",
-    spotifyId: "7K3scENpOi7ZPZUHfnfic3",
-  },
-  {
-    id: "eletronics-lofi",
-    name: "Eletronics",
-    description: "Ser constante e fluído.",
-    spotifyId: "4rCCdVVzrdSOoyvBXGdnGL",
-  },
-] as const;
 
-type DefaultPlaylist = (typeof DEFAULT_PLAYLISTS)[number];
-
-type ActivePlaylist = {
-  spotifyId: string;
-  label: string;
-  isCustom: boolean;
-};
-
-type SpotifyEmbedPlayOptions = {
-  uri: string;
-  index?: { position: number };
-};
-
-type SpotifyEmbedController = {
-  loadUri: (uri: string) => Promise<void> | void;
-  setVolume?: (value: number) => Promise<void> | void;
-  play: (options?: SpotifyEmbedPlayOptions) => Promise<void> | void;
-  pause: () => Promise<void> | void;
-  togglePlay?: () => Promise<void> | void;
-  destroy?: () => void;
-  getCurrentState?: () => Promise<unknown> | unknown;
-
-};
-
-type SpotifyIframeApi = {
-  createController: (
-    element: HTMLElement,
-    options: {
-      uri: string;
-      width?: string | number;
-      height?: string | number;
-      theme?: "dark" | "light";
-    },
-    callback: (controller: SpotifyEmbedController) => void,
-  ) => void;
-};
-
-declare global {
-  interface Window {
-    onSpotifyIframeApiReady?: (api: SpotifyIframeApi) => void;
-    SpotifyIframeApi?: SpotifyIframeApi;
-  }
-}
-
-function useSpotifyIframeApi() {
-  const [api, setApi] = useState<SpotifyIframeApi | null>(() => {
-    if (typeof window === "undefined") {
-      return null;
-    }
-    return window.SpotifyIframeApi ?? null;
-  });
-
-  useEffect(() => {
-    if (typeof window === "undefined" || api) {
-      return;
-    }
-
-    const existingApi = window.SpotifyIframeApi;
-    if (existingApi) {
-      setApi(existingApi);
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.src = "https://open.spotify.com/embed/iframe-api/v1";
-    script.async = true;
-    document.body.appendChild(script);
-
-    const handleReady = (iframeApi: SpotifyIframeApi) => {
-      window.SpotifyIframeApi = iframeApi;
-      setApi(iframeApi);
-    };
-
-    window.onSpotifyIframeApiReady = handleReady;
-
-    return () => {
-      if (window.onSpotifyIframeApiReady === handleReady) {
-        window.onSpotifyIframeApiReady = undefined;
-      }
-    };
-  }, [api]);
-
-  return api;
-}
+import {
+  DEFAULT_PLAYLISTS,
+  useBackgroundPlaylist,
+  type DefaultPlaylist,
+} from "./BackgroundPlaylistProvider";
+import { SpotifyPlayerErrorBoundary } from "./SpotifyPlayerErrorBoundary";
+import { SpotifyPlayerSurface } from "./SpotifyPlayerSurface";
 
 function extractSpotifyPlaylistId(value: string): string | null {
   const trimmed = value.trim();
@@ -128,205 +33,19 @@ function extractSpotifyPlaylistId(value: string): string | null {
   return null;
 }
 
-const DEFAULT_RANDOM_POOL_SIZE = 20;
-
-function isFinitePositiveNumber(value: unknown): value is number {
-  return typeof value === "number" && Number.isFinite(value) && value > 0;
-}
-
-function extractPlaylistLength(state: unknown): number | null {
-  if (!state || typeof state !== "object") {
-    return null;
-  }
-
-  const candidatePaths: Array<Array<string>> = [
-    ["context", "metadata", "current_context", "metadata", "length"],
-    ["context", "metadata", "length"],
-    ["metadata", "current_context", "metadata", "length"],
-    ["metadata", "context", "metadata", "length"],
-    ["metadata", "track_count"],
-  ];
-
-  for (const path of candidatePaths) {
-    let current: unknown = state;
-    for (const key of path) {
-      if (!current || typeof current !== "object") {
-        current = undefined;
-        break;
-      }
-      current = (current as Record<string, unknown>)[key];
-    }
-
-    if (isFinitePositiveNumber(current)) {
-      return current;
-    }
-  }
-
-  const metadata = (state as Record<string, unknown>).metadata;
-  if (!metadata || typeof metadata !== "object") {
-    return null;
-  }
-
-  const nextTracks = Array.isArray(
-    (metadata as Record<string, unknown>).next_tracks,
-  )
-    ? ((metadata as Record<string, unknown>).next_tracks as unknown[]).length
-    : 0;
-  const previousTracks = Array.isArray(
-    (metadata as Record<string, unknown>).previous_tracks,
-  )
-    ? ((metadata as Record<string, unknown>).previous_tracks as unknown[])
-        .length
-    : 0;
-  const hasCurrentTrack = Boolean(
-    (metadata as Record<string, unknown>).current_track,
-  );
-
-  const inferredLength = nextTracks + previousTracks + (hasCurrentTrack ? 1 : 0);
-
-  return inferredLength > 0 ? inferredLength : null;
-}
-
 export function BackgroundPlaylistSelector() {
-  const [activePlaylist, setActivePlaylist] = useState<ActivePlaylist>({
-    spotifyId: DEFAULT_PLAYLISTS[0].spotifyId,
-    label: DEFAULT_PLAYLISTS[0].name,
-    isCustom: false,
-  });
+  const {
+    activePlaylist,
+    setActivePlaylist,
+    supportsVolumeControl,
+    volume,
+    setVolume,
+  } = useBackgroundPlaylist();
   const [customInput, setCustomInput] = useState("");
   const [customError, setCustomError] = useState<string | null>(null);
   const [hasCustomPlaylist, setHasCustomPlaylist] = useState(false);
-  const [volume, setVolume] = useState(70);
   const [showVolumeControls, setShowVolumeControls] = useState(false);
-  const [supportsVolumeControl, setSupportsVolumeControl] = useState(false);
-  const spotifyApi = useSpotifyIframeApi();
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const controllerRef = useRef<SpotifyEmbedController | null>(null);
-  const [isPlayerReady, setIsPlayerReady] = useState(false);
-
-  const desiredPlaybackRef = useRef(false);
-  const lastPlaybackIntentRef = useRef(false);
-  const lastRandomizedPlaylistRef = useRef<string | null>(null);
-
-  const attemptRandomizedStart = useCallback(
-    async (controller: SpotifyEmbedController) => {
-      const playlistUri = `spotify:playlist:${activePlaylist.spotifyId}`;
-
-      const trackCount = await (async () => {
-        if (typeof controller.getCurrentState !== "function") {
-          return null;
-        }
-
-        try {
-          const state = await controller.getCurrentState();
-          const extracted = extractPlaylistLength(state);
-          return extracted && extracted > 1 ? extracted : null;
-        } catch {
-          return null;
-        }
-      })();
-
-      const poolSize = trackCount ?? DEFAULT_RANDOM_POOL_SIZE;
-      const safePool = Math.max(1, poolSize);
-      const primaryIndex = Math.floor(Math.random() * safePool);
-      const fallbackIndex = primaryIndex > 0 ? Math.floor(primaryIndex / 2) : 0;
-      const indicesToTry = Array.from(
-        new Set([primaryIndex, fallbackIndex, 0]).values(),
-      );
-
-      for (const index of indicesToTry) {
-        try {
-          const maybeResult = controller.play({
-            uri: playlistUri,
-            index: { position: index },
-          });
-
-          if (
-            maybeResult &&
-            typeof (maybeResult as Promise<unknown>).then === "function"
-          ) {
-            await maybeResult;
-          }
-
-          return true;
-        } catch {
-          // Continua tentando com o próximo índice candidato.
-        }
-      }
-
-      return false;
-    },
-    [activePlaylist.spotifyId],
-  );
-
-  const syncControllerPlayback = useCallback(
-    (controller?: SpotifyEmbedController | null) => {
-      const target = controller ?? controllerRef.current;
-      if (!target) {
-        return;
-      }
-
-      const shouldPlay = desiredPlaybackRef.current;
-      const playlistId = activePlaylist.spotifyId;
-
-      if (!shouldPlay) {
-        lastPlaybackIntentRef.current = false;
-        lastRandomizedPlaylistRef.current = null;
-        target.pause?.();
-        return;
-      }
-
-      const wasPlaying = lastPlaybackIntentRef.current;
-      const playlistChanged = lastRandomizedPlaylistRef.current !== playlistId;
-
-      lastPlaybackIntentRef.current = true;
-
-      if (!wasPlaying || playlistChanged) {
-        void (async () => {
-          const didRandomize = await attemptRandomizedStart(target);
-
-          if (!desiredPlaybackRef.current) {
-            target.pause?.();
-            return;
-          }
-
-          if (!didRandomize) {
-            target.play?.();
-          }
-
-          lastRandomizedPlaylistRef.current = playlistId;
-        })();
-        return;
-      }
-
-      target.play?.();
-    },
-    [activePlaylist.spotifyId, attemptRandomizedStart],
-  );
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const handleStart = () => {
-      desiredPlaybackRef.current = true;
-      syncControllerPlayback();
-    };
-
-    const handlePause = () => {
-      desiredPlaybackRef.current = false;
-      syncControllerPlayback();
-    };
-
-    window.addEventListener("flowguilt:pomodoro-timer-start", handleStart);
-    window.addEventListener("flowguilt:pomodoro-timer-pause", handlePause);
-
-    return () => {
-      window.removeEventListener("flowguilt:pomodoro-timer-start", handleStart);
-      window.removeEventListener("flowguilt:pomodoro-timer-pause", handlePause);
-    };
-  }, []);
+  const isDesktop = useMediaQuery("(min-width: 640px)");
 
   const handleSelectDefault = (playlist: DefaultPlaylist) => {
     setActivePlaylist({
@@ -356,82 +75,16 @@ export function BackgroundPlaylistSelector() {
   };
 
   useEffect(() => {
-    if (!spotifyApi || controllerRef.current || !containerRef.current) {
-      return;
-    }
-
-    let isCancelled = false;
-
-    spotifyApi.createController(
-      containerRef.current,
-      {
-        uri: `spotify:playlist:${activePlaylist.spotifyId}`,
-        width: "100%",
-        height: "232",
-        theme: "dark",
-      },
-      (controller) => {
-        if (isCancelled) {
-          controller.destroy?.();
-          return;
-        }
-        controllerRef.current = controller;
-        const canSetVolume = typeof controller.setVolume === "function";
-        setSupportsVolumeControl(canSetVolume);
-        if (canSetVolume) {
-          controller.setVolume?.(volume / 100);
-        } else {
-          setShowVolumeControls(false);
-        }
-        syncControllerPlayback(controller);
-        setIsPlayerReady(true);
-      },
-    );
-
-    return () => {
-      isCancelled = true;
-      controllerRef.current?.destroy?.();
-      controllerRef.current = null;
-      setIsPlayerReady(false);
-      setSupportsVolumeControl(false);
+    if (!supportsVolumeControl) {
       setShowVolumeControls(false);
-      if (containerRef.current) {
-        containerRef.current.innerHTML = "";
-      }
-    };
-    // Apenas inicializa uma vez, os updates são tratados em outros efeitos.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [spotifyApi]);
+    }
+  }, [supportsVolumeControl]);
 
   useEffect(() => {
-    const controller = controllerRef.current;
-    if (!controller) {
-      return;
+    if (activePlaylist.isCustom) {
+      setHasCustomPlaylist(true);
     }
-    const maybePromise = controller.loadUri(
-      `spotify:playlist:${activePlaylist.spotifyId}`,
-    );
-
-    if (
-      maybePromise &&
-      typeof (maybePromise as Promise<unknown>).then === "function"
-    ) {
-      void (maybePromise as Promise<unknown>).then(() => {
-        syncControllerPlayback(controllerRef.current);
-      });
-    } else {
-      syncControllerPlayback(controller);
-    }
-  }, [activePlaylist.spotifyId]);
-
-  useEffect(() => {
-    const controller = controllerRef.current;
-    if (!controller?.setVolume) {
-      return;
-    }
-
-    void controller.setVolume(volume / 100);
-  }, [volume]);
+  }, [activePlaylist.isCustom]);
 
   const handleVolumeChange = (value: number) => {
     setVolume(Math.min(100, Math.max(0, value)));
@@ -522,17 +175,17 @@ export function BackgroundPlaylistSelector() {
         <p className="text-xs uppercase tracking-[0.18em] text-zinc-400">
           Reprodução atual
         </p>
-        <div className="overflow-hidden rounded-xl border border-white/10 bg-black/60 shadow-inner">
-          <div
-            ref={containerRef}
-            className={cn(
-              "h-[232px] w-full",
-              !isPlayerReady ? "grid place-items-center text-sm text-zinc-400" : undefined,
-            )}
-          >
-            {!isPlayerReady && <p>Carregando player do Spotify...</p>}
+        {isDesktop ? (
+          <SpotifyPlayerErrorBoundary>
+            <div className="overflow-hidden rounded-xl border border-white/10 bg-black/60 shadow-inner">
+              <SpotifyPlayerSurface />
+            </div>
+          </SpotifyPlayerErrorBoundary>
+        ) : (
+          <div className="rounded-xl border border-white/10 bg-black/40 p-3 text-xs text-zinc-400">
+            O player do Spotify aparece como painel flutuante no canto da tela.
           </div>
-        </div>
+        )}
         <div className="flex flex-col gap-2 rounded-lg border border-white/10 bg-black/40 p-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-xs text-zinc-300">Controle de volume</p>
