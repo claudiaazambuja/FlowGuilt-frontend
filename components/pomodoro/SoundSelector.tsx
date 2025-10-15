@@ -10,12 +10,24 @@ type SoundSelectorProps = {
   selectedSoundId: SoundId;
   onSelect: (soundId: SoundId) => void;
   onPreview: (soundId: SoundId) => void;
+  minSoundDurationSeconds: number;
+  minSoundDurationInput: string;
+  onMinSoundDurationChange: (value: string) => void;
+  onMinSoundDurationBlur: () => void;
+  minSoundDurationMin: number;
+  minSoundDurationMax: number;
 };
 
 export function SoundSelector({
   selectedSoundId,
   onSelect,
   onPreview,
+  minSoundDurationSeconds,
+  minSoundDurationInput,
+  onMinSoundDurationChange,
+  onMinSoundDurationBlur,
+  minSoundDurationMin,
+  minSoundDurationMax,
 }: SoundSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const toggleButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -84,13 +96,15 @@ export function SoundSelector({
           aria-expanded={isOpen}
           aria-controls="sound-selector-panel"
           className={cn(
-            "h-10 w-10 rounded-full border border-white/10 bg-[#1E1E1E]/80 p-0",
+            "relative flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-[#1E1E1E]/80 p-0",
             "text-zinc-200 transition hover:border-[#6C3BF4]/40 hover:text-white",
             isOpen ? "border-[#6C3BF4] text-white" : undefined,
           )}
           onClick={() => setIsOpen((previous) => !previous)}
         >
-          <span className="sr-only">Selecionar som do alarme</span>
+          <span className="sr-only">
+            Selecionar som do alarme. Duração mínima atual {minSoundDurationSeconds} segundos.
+          </span>
           <svg
             aria-hidden="true"
             className="h-5 w-5"
@@ -105,6 +119,12 @@ export function SoundSelector({
             <path d="M6 19a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
             <path d="M18 20a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
           </svg>
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute bottom-1 right-1 rounded-md border border-[#6C3BF4]/50 bg-[#12092a]/95 px-1.5 py-[1px] text-[10px] font-semibold leading-none text-[#d7c7ff] shadow-[0_0_8px_rgba(108,59,244,0.35)]"
+          >
+            {minSoundDurationSeconds}s
+          </span>
         </Button>
 
         {isOpen ? (
@@ -122,6 +142,35 @@ export function SoundSelector({
               </p>
               <p className="text-[11px] text-zinc-600">
                 Som padrão: <span className="text-zinc-300">{defaultSoundLabel}</span>
+              </p>
+            </div>
+            <div className="mt-3 rounded-lg border border-white/5 bg-black/20 p-3">
+              <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-[#b9a7ff]">
+                Duração mínima
+              </p>
+              <div className="mt-2 flex items-center gap-2">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  min={minSoundDurationMin}
+                  max={minSoundDurationMax}
+                  value={minSoundDurationInput}
+                  onChange={(event) => onMinSoundDurationChange(event.target.value)}
+                  onBlur={onMinSoundDurationBlur}
+                  className="w-20 rounded-md border border-white/10 bg-[#0d0d0d]/80 px-2 py-1 text-right text-sm font-semibold text-[#f4f4f5] shadow-inner transition focus:border-[#6C3BF4] focus:outline-none focus:ring-1 focus:ring-[#6C3BF4]/40"
+                  aria-describedby="sound-duration-help"
+                />
+                <span className="text-xs text-zinc-400">seg</span>
+              </div>
+              <p
+                id="sound-duration-help"
+                className="mt-1 text-[10px] leading-snug text-zinc-500"
+              >
+                Toca por pelo menos {minSoundDurationSeconds} segundos ou até você interagir.
+              </p>
+              <p className="mt-1 text-[10px] text-zinc-600">
+                Intervalo permitido: {minSoundDurationMin}-{minSoundDurationMax} segundos.
               </p>
             </div>
             <div className="mt-3 flex max-h-64 flex-col gap-2 overflow-y-auto pr-1">
