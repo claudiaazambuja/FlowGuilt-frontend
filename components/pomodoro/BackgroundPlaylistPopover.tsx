@@ -60,7 +60,7 @@ export function BackgroundPlaylistPopover() {
         aria-haspopup="dialog"
         aria-expanded={isOpen}
       >
-        Ambiente sonoro de fundo
+        Ambiente sonoro
       </Button>
 
       <div

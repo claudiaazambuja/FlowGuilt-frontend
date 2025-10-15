@@ -9,8 +9,14 @@ const DEFAULT_PLAYLISTS = [
   {
     id: "serotonin",
     name: "Serotonin",
-    description: "Beats tranquilos para estudar com foco.",
+    description: "Para focar com gás total.",
     spotifyId: "4dx7CqzVnWkTvTox9poIYF",
+  },
+  {
+    id: "brazilian-lofi",
+    name: "Brazilian Lofi",
+    description: "Lofi nacional com groove leve e constante.",
+    spotifyId: "7K3scENpOi7ZPZUHfnfic3",
   },
   {
     id: "brazilian-lofi",
