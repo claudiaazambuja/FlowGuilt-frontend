@@ -17,9 +17,10 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:gh": "node scripts/build-gh.mjs",
     "start": "node scripts/serve-out.mjs",
-    "sync-docs": "rm -rf docs && cp -r out docs && touch docs/.nojekyll && cp docs/index.html docs/404.html || true",
-    "predeploy": "npm run build && npm run sync-docs",
+    "sync-docs": "node scripts/sync-docs.mjs",
+    "predeploy": "npm run build:gh && npm run sync-docs",
     "deploy": "npm run predeploy && git add -f docs && git commit -m \"deploy: export static to docs/\" && git push"
   }
 }
