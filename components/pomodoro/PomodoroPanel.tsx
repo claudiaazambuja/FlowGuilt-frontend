@@ -13,6 +13,7 @@ import {
   type SoundId,
 } from "@/lib/soundLibrary";
 
+import { BackgroundPlaylistPopover } from "./BackgroundPlaylistPopover";
 import { Controls } from "./Controls";
 import { ModeSelector, type Mode } from "./ModeSelector";
 import { SoundSelector } from "./SoundSelector";
@@ -237,6 +238,8 @@ export default function PomodoroPanel() {
         )}
 
         <TimeCircle seconds={secondsLeft} total={totalSeconds} />
+
+        <BackgroundPlaylistPopover />
 
         <Controls
           running={isRunning}
