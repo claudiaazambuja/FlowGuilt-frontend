@@ -1,10 +1,10 @@
-import PomodoroPanel from "@/components/pomodoro/PomodoroPanel";
+import { BackgroundPlaylistPopover } from "@/components/pomodoro/BackgroundPlaylistPopover";
 import { WeatherAdaptiveBackground } from "@/components/WeatherAdaptiveBackground";
 
 export default function Page() {
   return (
     <WeatherAdaptiveBackground>
-      <PomodoroPanel />
+      <BackgroundPlaylistPopover initialOpen dismissible={false} showTrigger={false} />
     </WeatherAdaptiveBackground>
   );
 }

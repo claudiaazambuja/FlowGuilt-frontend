@@ -1,17 +1,25 @@
 "use client";
 
-
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-
 
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib";
 
 import { BackgroundPlaylistSelector } from "./BackgroundPlaylistSelector";
 
-export function BackgroundPlaylistPopover() {
-  const [isOpen, setIsOpen] = useState(false);
+type BackgroundPlaylistPopoverProps = {
+  initialOpen?: boolean;
+  showTrigger?: boolean;
+  dismissible?: boolean;
+};
+
+export function BackgroundPlaylistPopover({
+  initialOpen = false,
+  showTrigger = true,
+  dismissible = true,
+}: BackgroundPlaylistPopoverProps) {
+  const [isOpen, setIsOpen] = useState(initialOpen);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const [position, setPosition] = useState({ top: 120, left: 120 });
@@ -115,6 +123,10 @@ export function BackgroundPlaylistPopover() {
   }, [handlePointerMove, handlePointerUp]);
 
   useEffect(() => {
+    setIsOpen(initialOpen);
+  }, [initialOpen]);
+
+  useEffect(() => {
     if (!isOpen) {
       return;
     }
@@ -125,49 +137,65 @@ export function BackgroundPlaylistPopover() {
         return;
       }
 
-      if (
-        panelRef.current?.contains(target) ||
-        triggerRef.current?.contains(target)
-      ) {
+      if (panelRef.current?.contains(target)) {
         return;
       }
 
-      setIsOpen(false);
-    };
+      if (showTrigger && triggerRef.current?.contains(target)) {
+        return;
+      }
 
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
+      if (dismissible) {
         setIsOpen(false);
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("touchstart", handleClickOutside);
-    document.addEventListener("keydown", handleEscape);
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && dismissible) {
+        setIsOpen(false);
+      }
+    };
+
+    if (dismissible) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("touchstart", handleClickOutside);
+      document.addEventListener("keydown", handleEscape);
+    }
 
     const updateInitialPosition = () => {
       if (!panelRef.current) {
         return;
       }
 
-      if (!hasUserPositionedRef.current && triggerRef.current) {
-        const triggerRect = triggerRef.current.getBoundingClientRect();
+      if (!hasUserPositionedRef.current) {
+        if (showTrigger && triggerRef.current) {
+          const triggerRect = triggerRef.current.getBoundingClientRect();
+          const panelWidth = panelRef.current.offsetWidth;
+          const desiredLeft = triggerRect.left + triggerRect.width / 2 - panelWidth / 2;
+          const desiredTop = triggerRect.bottom + 12;
+          updatePosition({
+            top: desiredTop,
+            left: desiredLeft,
+          });
+          return;
+        }
+
         const panelWidth = panelRef.current.offsetWidth;
-        const desiredLeft = triggerRect.left + triggerRect.width / 2 - panelWidth / 2;
-        const desiredTop = triggerRect.bottom + 12;
+        const panelHeight = panelRef.current.offsetHeight;
         updatePosition({
-          top: desiredTop,
-          left: desiredLeft,
+          top: window.innerHeight / 2 - panelHeight / 2,
+          left: window.innerWidth / 2 - panelWidth / 2,
         });
-      } else {
-        setPosition((prev) => {
-          const next = clampPosition(prev);
-          if (next.top === prev.top && next.left === prev.left) {
-            return prev;
-          }
-          return next;
-        });
+        return;
       }
+
+      setPosition((prev) => {
+        const next = clampPosition(prev);
+        if (next.top === prev.top && next.left === prev.left) {
+          return prev;
+        }
+        return next;
+      });
     };
 
     const raf = window.requestAnimationFrame(updateInitialPosition);
@@ -184,27 +212,31 @@ export function BackgroundPlaylistPopover() {
 
     window.addEventListener("resize", handleResize);
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("touchstart", handleClickOutside);
-      document.removeEventListener("keydown", handleEscape);
+      if (dismissible) {
+        document.removeEventListener("mousedown", handleClickOutside);
+        document.removeEventListener("touchstart", handleClickOutside);
+        document.removeEventListener("keydown", handleEscape);
+      }
 
       window.removeEventListener("resize", handleResize);
       window.cancelAnimationFrame(raf);
     };
-  }, [clampPosition, isOpen, updatePosition]);
+  }, [clampPosition, dismissible, isOpen, showTrigger, updatePosition]);
 
   return (
     <div className="relative flex flex-col items-center">
-      <Button
-        ref={triggerRef}
-        type="button"
-        variant="secondary"
-        onClick={() => setIsOpen((prev) => !prev)}
-        aria-haspopup="dialog"
-        aria-expanded={isOpen}
-      >
-        Ambiente sonoro
-      </Button>
+      {showTrigger && (
+        <Button
+          ref={triggerRef}
+          type="button"
+          variant="secondary"
+          onClick={() => setIsOpen((prev) => !prev)}
+          aria-haspopup="dialog"
+          aria-expanded={isOpen}
+        >
+          Ambiente sonoro
+        </Button>
+      )}
 
       <div
         ref={panelRef}
