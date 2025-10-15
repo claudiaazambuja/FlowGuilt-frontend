@@ -30,7 +30,7 @@ type ActivePlaylist = {
 
 type SpotifyEmbedController = {
   loadUri: (uri: string) => Promise<void> | void;
-  setVolume: (value: number) => Promise<void> | void;
+  setVolume?: (value: number) => Promise<void> | void;
   play: () => Promise<void> | void;
   pause: () => Promise<void> | void;
   togglePlay?: () => Promise<void> | void;
@@ -127,6 +127,7 @@ export function BackgroundPlaylistSelector() {
   const [hasCustomPlaylist, setHasCustomPlaylist] = useState(false);
   const [volume, setVolume] = useState(70);
   const [showVolumeControls, setShowVolumeControls] = useState(false);
+  const [supportsVolumeControl, setSupportsVolumeControl] = useState(false);
   const spotifyApi = useSpotifyIframeApi();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const controllerRef = useRef<SpotifyEmbedController | null>(null);
@@ -180,7 +181,15 @@ export function BackgroundPlaylistSelector() {
           return;
         }
         controllerRef.current = controller;
-        controller.setVolume(volume / 100);
+
+        const canSetVolume = typeof controller.setVolume === "function";
+        setSupportsVolumeControl(canSetVolume);
+        if (canSetVolume) {
+          controller.setVolume?.(volume / 100);
+        } else {
+          setShowVolumeControls(false);
+        }
+
         setIsPlayerReady(true);
       },
     );
@@ -190,6 +199,9 @@ export function BackgroundPlaylistSelector() {
       controllerRef.current?.destroy?.();
       controllerRef.current = null;
       setIsPlayerReady(false);
+      setSupportsVolumeControl(false);
+      setShowVolumeControls(false);
+
       if (containerRef.current) {
         containerRef.current.innerHTML = "";
       }
@@ -209,7 +221,7 @@ export function BackgroundPlaylistSelector() {
 
   useEffect(() => {
     const controller = controllerRef.current;
-    if (!controller) {
+    if (!controller?.setVolume) {
       return;
     }
 
@@ -325,29 +337,41 @@ export function BackgroundPlaylistSelector() {
               className="text-xs"
               onClick={() => setShowVolumeControls((prev) => !prev)}
               aria-expanded={showVolumeControls}
+              disabled={!supportsVolumeControl}
             >
-              {showVolumeControls ? "Ocultar medidor" : "Medir volume"}
+              {supportsVolumeControl
+                ? showVolumeControls
+                  ? "Ocultar medidor"
+                  : "Medir volume"
+                : "Indisponível"}
             </Button>
           </div>
-          {showVolumeControls && (
-            <div className="flex flex-col gap-2">
-              <label
-                htmlFor="playlistVolume"
-                className="text-xs uppercase tracking-[0.14em] text-zinc-400"
-              >
-                Volume atual: {volume}%
-              </label>
-              <input
-                id="playlistVolume"
-                type="range"
-                min={0}
-                max={100}
-                step={1}
-                value={volume}
-                onChange={(event) => handleVolumeChange(Number(event.target.value))}
-                className="accent-[#1DB954]"
-              />
-            </div>
+          {supportsVolumeControl ? (
+            showVolumeControls && (
+              <div className="flex flex-col gap-2">
+                <label
+                  htmlFor="playlistVolume"
+                  className="text-xs uppercase tracking-[0.14em] text-zinc-400"
+                >
+                  Volume atual: {volume}%
+                </label>
+                <input
+                  id="playlistVolume"
+                  type="range"
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={volume}
+                  onChange={(event) => handleVolumeChange(Number(event.target.value))}
+                  className="accent-[#1DB954]"
+                />
+              </div>
+            )
+          ) : (
+            <p className="text-xs text-amber-300">
+              Ajuste o volume diretamente no player do Spotify.
+            </p>
+
           )}
         </div>
         <p className="text-xs text-zinc-400">
