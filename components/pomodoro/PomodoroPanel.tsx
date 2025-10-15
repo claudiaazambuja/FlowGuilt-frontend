@@ -13,6 +13,7 @@ import {
   type SoundId,
 } from "@/lib/soundLibrary";
 
+import { BackgroundPlaylistPopover } from "./BackgroundPlaylistPopover";
 import { Controls } from "./Controls";
 import { ModeSelector, type Mode } from "./ModeSelector";
 import { SoundSelector } from "./SoundSelector";
@@ -143,6 +144,35 @@ export default function PomodoroPanel() {
     { onComplete: handleTimerComplete },
   );
 
+  const previousRunningRef = useRef<boolean | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    if (previousRunningRef.current === isRunning) {
+      return;
+    }
+
+    if (previousRunningRef.current !== null) {
+      const eventName = isRunning
+        ? "flowguilt:pomodoro-timer-start"
+        : "flowguilt:pomodoro-timer-pause";
+      window.dispatchEvent(new CustomEvent(eventName));
+    }
+
+    previousRunningRef.current = isRunning;
+  }, [isRunning]);
+
+  useEffect(() => {
+    return () => {
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("flowguilt:pomodoro-timer-pause"));
+      }
+    };
+  }, []);
+
   useTimerKeyboardShortcuts({ onRestart: restart, onStartPause: startPause });
 
   const handleCustomMinutesChange = (value: string) => {
@@ -237,6 +267,8 @@ export default function PomodoroPanel() {
         )}
 
         <TimeCircle seconds={secondsLeft} total={totalSeconds} />
+
+        <BackgroundPlaylistPopover />
 
         <Controls
           running={isRunning}
