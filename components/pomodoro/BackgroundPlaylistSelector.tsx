@@ -181,6 +181,7 @@ export function BackgroundPlaylistSelector() {
           return;
         }
         controllerRef.current = controller;
+
         const canSetVolume = typeof controller.setVolume === "function";
         setSupportsVolumeControl(canSetVolume);
         if (canSetVolume) {
@@ -188,6 +189,7 @@ export function BackgroundPlaylistSelector() {
         } else {
           setShowVolumeControls(false);
         }
+
         setIsPlayerReady(true);
       },
     );
@@ -199,6 +201,7 @@ export function BackgroundPlaylistSelector() {
       setIsPlayerReady(false);
       setSupportsVolumeControl(false);
       setShowVolumeControls(false);
+
       if (containerRef.current) {
         containerRef.current.innerHTML = "";
       }
@@ -368,6 +371,7 @@ export function BackgroundPlaylistSelector() {
             <p className="text-xs text-amber-300">
               Ajuste o volume diretamente no player do Spotify.
             </p>
+
           )}
         </div>
         <p className="text-xs text-zinc-400">
