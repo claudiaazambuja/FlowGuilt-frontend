@@ -18,14 +18,12 @@ const DEFAULT_PLAYLISTS = [
     spotifyId: "7K3scENpOi7ZPZUHfnfic3",
   },
   {
-    id: "eletronics-lofi",
-    name: "Eletronics",
-    description: "Ser constante e fluído.",
-    spotifyId: "4rCCdVVzrdSOoyvBXGdnGL",
+    id: "brazilian-lofi",
+    name: "Brazilian Lofi",
+    description: "Lofi nacional com groove leve e constante.",
+    spotifyId: "7K3scENpOi7ZPZUHfnfic3",
   },
 ] as const;
-
-
 
 type DefaultPlaylist = (typeof DEFAULT_PLAYLISTS)[number];
 
