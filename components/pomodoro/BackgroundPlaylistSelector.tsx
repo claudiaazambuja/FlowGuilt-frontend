@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
-
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib";
 
@@ -41,6 +40,7 @@ type SpotifyEmbedController = {
   togglePlay?: () => Promise<void> | void;
   destroy?: () => void;
   getCurrentState?: () => Promise<unknown> | unknown;
+
 };
 
 type SpotifyIframeApi = {
@@ -197,6 +197,7 @@ export function BackgroundPlaylistSelector() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const controllerRef = useRef<SpotifyEmbedController | null>(null);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
+
   const desiredPlaybackRef = useRef(false);
   const lastPlaybackIntentRef = useRef(false);
   const lastRandomizedPlaylistRef = useRef<string | null>(null);
@@ -401,7 +402,6 @@ export function BackgroundPlaylistSelector() {
     if (!controller) {
       return;
     }
-
     const maybePromise = controller.loadUri(
       `spotify:playlist:${activePlaylist.spotifyId}`,
     );

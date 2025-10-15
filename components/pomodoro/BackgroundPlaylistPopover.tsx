@@ -1,7 +1,9 @@
 "use client";
 
+
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
+
 
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib";
@@ -181,11 +183,11 @@ export function BackgroundPlaylistPopover() {
     };
 
     window.addEventListener("resize", handleResize);
-
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("touchstart", handleClickOutside);
       document.removeEventListener("keydown", handleEscape);
+
       window.removeEventListener("resize", handleResize);
       window.cancelAnimationFrame(raf);
     };
