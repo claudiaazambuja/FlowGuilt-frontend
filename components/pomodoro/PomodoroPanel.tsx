@@ -27,6 +27,8 @@ const PRESET_SECONDS: Record<Exclude<Mode, "custom">, number> = {
 const DEFAULT_CUSTOM_MINUTES = 30;
 const MIN_CUSTOM_MINUTES = 1;
 const MAX_CUSTOM_MINUTES = 180;
+const MIN_SOUND_DURATION_SECONDS = 5;
+const MAX_SOUND_DURATION_SECONDS = 900;
 
 export default function PomodoroPanel() {
   const [mode, setMode] = useState<Mode>("pomodoro");
@@ -37,6 +39,9 @@ export default function PomodoroPanel() {
     DEFAULT_SOUND_ID,
   );
   const [soundError, setSoundError] = useState<string | null>(null);
+  const [minSoundDurationInput, setMinSoundDurationInput] = useState<string>(
+    String(DEFAULT_MIN_SOUND_DURATION_SECONDS),
+  );
   const audioContextRef = useRef<AudioContext | null>(null);
 
   const ensureAudioContext = useCallback(async () => {
@@ -110,16 +115,28 @@ export default function PomodoroPanel() {
       : PRESET_SECONDS[mode];
   }, [mode, parsedCustomMinutes]);
 
+  const parsedMinSoundDuration = useMemo(() => {
+    const numericValue = Number(minSoundDurationInput);
+    if (!Number.isFinite(numericValue) || numericValue <= 0) {
+      return DEFAULT_MIN_SOUND_DURATION_SECONDS;
+    }
+
+    return Math.max(
+      MIN_SOUND_DURATION_SECONDS,
+      Math.min(MAX_SOUND_DURATION_SECONDS, Math.floor(numericValue)),
+    );
+  }, [minSoundDurationInput]);
+
   const handleTimerComplete = useCallback(() => {
     void (async () => {
       const context = await ensureAudioContext();
       if (context) {
         playSoundOption(context, selectedSoundId, {
-          minDurationSeconds: DEFAULT_MIN_SOUND_DURATION_SECONDS,
+          minDurationSeconds: parsedMinSoundDuration,
         });
       }
     })();
-  }, [ensureAudioContext, selectedSoundId]);
+  }, [ensureAudioContext, parsedMinSoundDuration, selectedSoundId]);
 
   const { secondsLeft, isRunning, startPause, restart } = usePomodoroTimer(
     totalSeconds,
@@ -138,18 +155,31 @@ export default function PomodoroPanel() {
     setCustomMinutesInput(String(parsedCustomMinutes));
   };
 
+  const handleMinSoundDurationChange = (value: string) => {
+    if (/^\d*$/.test(value)) {
+      setMinSoundDurationInput(value);
+    }
+  };
+
+  const handleMinSoundDurationBlur = () => {
+    setMinSoundDurationInput(String(parsedMinSoundDuration));
+  };
+
   const handlePreviewSound = useCallback(
     (soundId: SoundId) => {
       void (async () => {
         const context = await ensureAudioContext();
         if (context) {
           playSoundOption(context, soundId, {
-            minDurationSeconds: DEFAULT_MIN_SOUND_DURATION_SECONDS,
+            minDurationSeconds: Math.min(
+              parsedMinSoundDuration,
+              DEFAULT_MIN_SOUND_DURATION_SECONDS,
+            ),
           });
         }
       })();
     },
-    [ensureAudioContext],
+    [ensureAudioContext, parsedMinSoundDuration],
   );
 
   return (
@@ -193,6 +223,12 @@ export default function PomodoroPanel() {
           selectedSoundId={selectedSoundId}
           onSelect={setSelectedSoundId}
           onPreview={handlePreviewSound}
+          minSoundDurationSeconds={parsedMinSoundDuration}
+          minSoundDurationInput={minSoundDurationInput}
+          onMinSoundDurationChange={handleMinSoundDurationChange}
+          onMinSoundDurationBlur={handleMinSoundDurationBlur}
+          minSoundDurationMin={MIN_SOUND_DURATION_SECONDS}
+          minSoundDurationMax={MAX_SOUND_DURATION_SECONDS}
         />
         {soundError && (
           <p className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
